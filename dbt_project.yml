@@ -1,0 +1,40 @@
+# dbt Project Configuration
+# This is the main configuration file for your dbt project
+
+name: 'dbt_refactor_sql'
+version: '1.0.0'
+config-version: 2
+
+# Profile determines database connection
+# For this project, we use Snowflake as the data warehouse
+profile: 'dbt_refactor_sql'
+
+# Macro to handle schema naming - prevents double prefixing
+dispatch:
+  - macro_namespace: dbt_utils
+    search_order: ['dbt_refactor_sql', 'dbt_utils']
+
+# Main folders for models
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Configuration for models
+models:
+  dbt_refactor_sql:
+    # Staging models (first layer - data cleaning)
+    staging:
+      +schema: 'staging'
+      +materialized: view
+
+    # Marts models (second layer - business logic)
+    mart:
+      +schema: 'mart'
+      +materialized: table
