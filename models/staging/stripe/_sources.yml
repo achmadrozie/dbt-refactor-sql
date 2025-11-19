@@ -2,6 +2,6 @@ version: 2
 
 sources:
   - name: stripe
-    database: raw
+    schema: public
     tables:
-      - name: payments
+      - name: stripe_payments
