@@ -1,25 +1,45 @@
-select 
-    orders.id as order_id,
-    orders.user_id as customer_id,
-    last_name as surname,
-    first_name as givenname,
-    first_order_date,
-    order_count,
-    total_lifetime_value,
-    round(amount/100.0,2) as order_value_dollars,
-    orders.status as order_status,
-    payments.status as payment_status
-from public.jaffle_shop_orders as orders
+-- Import CTEs
+with
 
-join (
+base_customers as (
+    select 
+        * 
+    from {{ ref('_stg_jaffle_shop__customers') }}
+)
+
+, orders as (
+    select
+        *
+    from {{ ref('_stg_jaffle_shop__orders') }}
+)
+
+, payments as (
+    select
+        *
+    from {{ ref('_stg_stripe__payments') }}
+    
+)
+-- Logical CTEs
+
+, customers as (
+    select 
+        first_name || ' ' || last_name as name, 
+        * 
+    from base_customers
+)
+, a as (
+      select 
+        row_number() over (partition by user_id order by order_date, id) as user_order_seq,
+        *
+      from orders
+)
+, b as ( 
       select 
         first_name || ' ' || last_name as name, 
         * 
-      from {{ ref('_stg_jaffle_shop__customers') }}
-) customers
-on orders.user_id = customers.id
-
-join (
+      from base_customers
+) 
+, customer_order_history as (
 
     select 
         b.id as customer_id,
@@ -63,19 +83,8 @@ join (
         
         array_agg(distinct a.id) as order_ids
 
-    from (
-      select 
-        row_number() over (partition by user_id order by order_date, id) as user_order_seq,
-        *
-      from {{ ref('_stg_jaffle_shop__orders') }}
-    ) a
-
-    join ( 
-      select 
-        first_name || ' ' || last_name as name, 
-        * 
-      from {{ ref('_stg_jaffle_shop__customers') }}
-    ) b
+    from a
+    join b
     on a.user_id = b.id
 
     left outer join public.stripe_payments c
@@ -85,13 +94,37 @@ join (
 
     group by b.id, b.name, b.last_name, b.first_name
 
-) customer_order_history
-on orders.user_id = customer_order_history.customer_id
+) 
+-- Finale CTEs
+, final as (
+    select 
+        orders.id as order_id,
+        orders.user_id as customer_id,
+        last_name as surname,
+        first_name as givenname,
+        first_order_date,
+        order_count,
+        total_lifetime_value,
 
-left outer join {{ ref('_stg_stripe__payments') }} payments
-on orders.id = payments.orderid
+        round(amount/100.0,2) as order_value_dollars,
 
-where payments.status != 'fail'
+        orders.status as order_status,
+        payments.status as payment_status
+    from orders
+    join customers
+        on orders.user_id = customers.id
+
+    join customer_order_history
+        on orders.user_id = customer_order_history.customer_id
+
+    left outer join payments
+        on orders.id = payments.orderid
+
+    where payments.status != 'fail'
+)
+
+select * from final
+
 
 
 
