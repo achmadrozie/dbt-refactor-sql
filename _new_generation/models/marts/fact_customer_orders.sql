@@ -1,3 +1,15 @@
+/***
+    1. ENVIRONMENT SETUP
+        - Enable dataset on seeds
+        - Enable legacy models
+        - Enable Macros (e.g. audit_helper)
+        - Push to Remote Repo
+        - Lower Case
+
+    2. SOURCE ENABLEMENT
+        - Create Sources
+        - Update Sources
+***/
 -- Source CTE
 with orders as (
     select *
@@ -24,9 +36,9 @@ with orders as (
     p.payment_finalized_date,
     c.first_name    as customer_first_name,
         c.last_name as customer_last_name
-from dbt_refactor.public._orders as orders
+from orders
 left join (select orderid as order_id, max(created) as payment_finalized_date, sum(amount) / 100.0 as total_amount_paid
-        from dbt_refactor.public._payments
+        from payments
         where status <> 'fail'
         group by 1) p on orders.id = p.order_id
 left join dbt_refactor.public._customers c on orders.user_id = c.id ),
@@ -36,8 +48,8 @@ as (select c.id as customer_id
     , min(order_date) as first_order_date
     , max(order_date) as most_recent_order_date
     , count(orders.id) as number_of_orders
-from dbt_refactor.public._customers c 
-left join dbt_refactor.public._orders as orders
+from customers c 
+left join orders
 on orders.user_id = c.id 
 group by 1)
 
