@@ -2,6 +2,7 @@ version: 2
 
 sources:
   - name: jaffle_shop
+    database: dbt_refactor
     schema: public
     tables:
       - name: jaffle_shop_customers
