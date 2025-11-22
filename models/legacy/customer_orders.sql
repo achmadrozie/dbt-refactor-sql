@@ -1,4 +1,6 @@
-select 
+{{ config(enabled=true) }}
+
+select
     orders.id as order_id,
     orders.user_id as customer_id,
     last_name as surname,
@@ -15,7 +17,7 @@ join (
       select 
         first_name || ' ' || last_name as name, 
         * 
-      from {{ ref('_stg_jaffle_shop__customers') }}
+      from public.jaffle_shop_customers
 ) customers
 on orders.user_id = customers.id
 
@@ -36,17 +38,17 @@ join (
         array_agg(distinct a.id) as order_ids
 
     from (
-      select 
+      select
         row_number() over (partition by user_id order by order_date, id) as user_order_seq,
         *
-      from {{ ref('_stg_jaffle_shop__orders') }}
+      from public.jaffle_shop_orders
     ) a
 
-    join ( 
-      select 
-        first_name || ' ' || last_name as name, 
-        * 
-      from {{ ref('_stg_jaffle_shop__customers') }}
+    join (
+      select
+        first_name || ' ' || last_name as name,
+        *
+      from public.jaffle_shop_customers
     ) b
     on a.user_id = b.id
 
@@ -60,7 +62,7 @@ join (
 ) customer_order_history
 on orders.user_id = customer_order_history.customer_id
 
-left outer join {{ ref('_stg_stripe__payments') }} payments
+left outer join public.stripe_payments payments
 on orders.id = payments.orderid
 
 where payments.status != 'fail'

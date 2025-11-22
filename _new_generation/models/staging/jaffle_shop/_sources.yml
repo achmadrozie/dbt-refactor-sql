@@ -1,8 +1,9 @@
 version: 2
 
 sources:
-  - name: stripe
+  - name: jaffle_shop
     database: dbt_refactor
     schema: public
     tables:
-      - name: stripe_payments
+      - name: _customers
+      - name: _orders

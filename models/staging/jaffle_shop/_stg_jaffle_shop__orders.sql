@@ -10,6 +10,10 @@ with source as (
         , order_date
         , status as order_status
         , row_number() over (partition by user_id order by order_date, id) as user_order_seq
+        , case 
+            when order_status not in ('returned','return_pending') 
+            then order_date 
+            end valid_order_date
     from source
 )
 

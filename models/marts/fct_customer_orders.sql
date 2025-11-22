@@ -1,106 +1,65 @@
 -- Import CTEs
 with
 
-customers as (
-    select 
+orders as (
+    select * from {{ ref('int_orders')}}
+)
+
+, customers as (
+    select
         *
     from {{ ref('_stg_jaffle_shop__customers') }}
 )
 
-, orders as (
+-- Customer-level aggregations (one row per customer)
+, customer_metrics as (
     select
-        *
-    from {{ ref('_stg_jaffle_shop__orders') }}
-)
-
-, payments as (
-    select
-        *
-    from {{ ref('_stg_stripe__payments') }}
-    
-)
-
--- Marts
-, customer_order_history as (
-
-    select 
-        customers.customer_id
-        , customers.surname
-        , customers.givenname
-        , customers.full_name
-
-        , min(orders.order_date) as first_order_date
-        
-        , min(case 
-            when orders.order_status not in ('returned','return_pending') 
-            then order_date 
-        end) as first_non_returned_order_date
-        
-        , max(case 
-            when orders.order_status not in ('returned','return_pending') 
-            then order_date 
-        end) as most_recent_non_returned_order_date
-        
-        , coalesce(max(user_order_seq),0) as order_count
-        
-        , coalesce(count(case
-            when orders.order_status != 'returned' 
-            then 1 end),
-            0) as non_returned_order_count
-        
-        , sum(case 
-            when orders.order_status not in ('returned','return_pending') 
-            then payments.payment_amount else 0 
-        end) as total_lifetime_value
-        
-        , sum(case 
-            when orders.order_status not in ('returned','return_pending') 
-            then payments.payment_amount else 0 
-        end)
-        /nullif(count(case 
-            when orders.order_status not in ('returned','return_pending') 
-            then 1 end),
-            0
-        ) as avg_non_returned_order_value
-        
-        , array_agg(distinct orders.order_id) as order_ids
-
-    from orders
-    join customers
-    on orders.customer_id = customers.customer_id
-
-    left outer join payments
-    on orders.order_id = payments.order_id
-
-    where orders.order_status not in ('pending') and payments.payment_status != 'fail'
-
-    group by customers.customer_id, customers.full_name, customers.givenname, customers.surname
-
-) 
--- Finale CTEs
-, final as (
-    select 
-        orders.order_id,
-        orders.customer_id,
+        customers.customer_id,
         customers.surname,
         customers.givenname,
-        first_order_date,
-        order_count,
-        total_lifetime_value,
-        payment_amount as order_value_dollars,
-        orders.order_status,
-        payments.payment_status
+        customers.full_name,
+
+        -- Customer level aggregations
+        min(orders.order_date) as first_order_date,
+        min(orders.valid_order_date) as first_non_returned_order_date,
+        max(orders.valid_order_date) as most_recent_non_returned_order_date,
+        count(*) as order_count,
+        sum(nvl2(orders.valid_order_date, 1, 0)) as non_returned_order_count,
+        sum(nvl2(orders.valid_order_date, orders.order_value_dollars, 0)) as total_lifetime_value
+
     from orders
     join customers
         on orders.customer_id = customers.customer_id
+    group by 1, 2, 3, 4
+)
 
-    join customer_order_history
-        on orders.customer_id = customer_order_history.customer_id
+, customer_metrics_with_avg as (
+    select
+        *,
+        total_lifetime_value / nullif(non_returned_order_count, 0) as avg_non_returned_order_value
+    from customer_metrics
+)
 
-    left outer join payments
-        on orders.order_id = payments.order_id
+-- Final CTE: Join order-level data with customer-level metrics
+, final as (
+    select
+        orders.order_id,
+        orders.customer_id,
+        cm.surname,
+        cm.givenname,
 
-    where payments.payment_status != 'fail'
+        cm.first_order_date,
+        cm.order_count,
+        cm.total_lifetime_value,
+        cm.avg_non_returned_order_value,
+
+        orders.order_value_dollars,
+        orders.order_status,
+        orders.payment_status
+
+    from orders
+    join customer_metrics_with_avg as cm
+        on orders.customer_id = cm.customer_id
 )
 
 select * from final

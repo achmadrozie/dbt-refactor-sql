@@ -5,4 +5,4 @@ sources:
     database: dbt_refactor
     schema: public
     tables:
-      - name: stripe_payments
+      - name: _payments
