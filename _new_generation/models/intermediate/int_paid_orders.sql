@@ -15,8 +15,7 @@ with orders as (
     select
         order_id,
         payment_finalized_date,
-        total_amount_paid,
-        row_number() over (order by order_id) as transaction_seq
+        total_amount_paid
     from {{ ref('int_payment_orders') }}
 )
 
@@ -30,10 +29,9 @@ with orders as (
         orders.order_status,
         payments.total_amount_paid,
         payments.payment_finalized_date,
-        payments.transaction_seq,
         customers.customer_first_name,
-        customers.customer_last_name,
-        row_number() over (partition by orders.customer_id order by orders.order_id) as customer_sales_seq
+        customers.customer_last_name
+        
     from orders
     left join payments 
         on orders.order_id = payments.order_id

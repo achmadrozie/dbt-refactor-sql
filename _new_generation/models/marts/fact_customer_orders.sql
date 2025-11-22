@@ -18,8 +18,15 @@
             - orders
             - customers
     
-    4. LOGIC - INTERMEDIARY DEVELOPMENT
-        - Develop int_payment_orders
+    4. INTERMEDIATE LAYER
+       - int_payment_orders: Payment aggregations
+       - int_paid_orders: Orders + Payments + Customers
+       - int_customer_orders: Customer aggregation stats
+       - int_customer_lifetime_value: CLV self-join calculation
+    
+    5. MART LAYER
+       - Business logic (nvsr, fdos)
+       - Final transformations
 ***/
 
 
@@ -35,24 +42,24 @@ with paid_orders as (
         payment_finalized_date,
         customer_first_name,
         customer_last_name,
-        transaction_seq,
-        customer_sales_seq,
+        row_number() over (order by order_id) as transaction_seq,
+        row_number() over (partition by customer_id order by order_id) as customer_sales_seq
     from {{ ref('int_paid_orders') }}
 
 )
 , customer_lifetime_value as (
     select
-        order_id
-        , clv_bad
+        order_id,
+        clv_bad
     from {{ ref('int_customer_lifetime_value') }}
 )
 , customer_orders as (
 
     select 
-        customer_id
-        , first_order_date
-        , most_recent_order_date
-        , number_of_orders
+        customer_id,
+        first_order_date,
+        most_recent_order_date,
+        number_of_orders
     from {{ ref('int_customer_orders') }}
 
 )
@@ -70,7 +77,7 @@ with paid_orders as (
         paid_orders.customer_last_name,
         paid_orders.transaction_seq,
         paid_orders.customer_sales_seq,
-        
+
         case when customer_orders.first_order_date = paid_orders.order_placed_at then 'new' else 'return' end   as nvsr,
         clv.clv_bad                                                                                             as customer_lifetime_value,
         customer_orders.first_order_date                                                                        as fdos
