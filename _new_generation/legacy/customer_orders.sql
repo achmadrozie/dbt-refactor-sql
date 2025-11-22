@@ -1,14 +1,4 @@
--- Source CTE
-with orders as (
-    select *
-    from {{ ref('_stg_jaffle_shop__orders') }}
-)
-
--- Logic CTE
-
-
--- Final CTE
-, paid_orders as (select orders.id as order_id,
+with paid_orders as (select orders.id as order_id,
     orders.user_id	as customer_id,
     orders.order_date as order_placed_at,
         orders.status as order_status,
@@ -16,20 +6,20 @@ with orders as (
     p.payment_finalized_date,
     c.first_name    as customer_first_name,
         c.last_name as customer_last_name
-from dbt_refactor.public.jaffle_shop_orders as orders
+from dbt_refactor.public._orders as orders
 left join (select orderid as order_id, max(created) as payment_finalized_date, sum(amount) / 100.0 as total_amount_paid
-        from dbt_refactor.public.stripe_payments
+        from dbt_refactor.public._payments
         where status <> 'fail'
         group by 1) p on orders.id = p.order_id
-left join dbt_refactor.public.jaffle_shop_customers c on orders.user_id = c.id ),
+left join dbt_refactor.public._customers c on orders.user_id = c.id ),
 
 customer_orders 
 as (select c.id as customer_id
     , min(order_date) as first_order_date
     , max(order_date) as most_recent_order_date
     , count(orders.id) as number_of_orders
-from dbt_refactor.public.jaffle_shop_customers c 
-left join dbt_refactor.public.jaffle_shop_orders as orders
+from dbt_refactor.public._customers c 
+left join dbt_refactor.public._orders as orders
 on orders.user_id = c.id 
 group by 1)
 
