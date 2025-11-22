@@ -6,76 +6,62 @@ orders as (
 )
 
 , customers as (
-    select 
+    select
         *
     from {{ ref('_stg_jaffle_shop__customers') }}
 )
---
-, customer_orders as (
+
+-- Customer-level aggregations (one row per customer)
+, customer_metrics as (
     select
-        customers.customer_id
-        , customers.surname
-        , customers.givenname
-        , customers.full_name
+        customers.customer_id,
+        customers.surname,
+        customers.givenname,
+        customers.full_name,
 
         -- Customer level aggregations
-        , min(orders.order_date) over(
-            partition by customers.customer_id
-            ) as customer_first_order_date
-        , min(orders.valid_order_date) over(
-            partition by customers.customer_id
-            ) as customer_first_non_returned_order_date
-
-        , max(orders.valid_order_date) over(
-            partition by customers.customer_id
-            ) as customer_most_recent_non_returned_order_date
-
-        , count(*) over (
-            partition by orders.customer_id
-            ) as customer_order_count
-
-        , sum(nvl2(orders.valid_order_date, 1, 0)) over(
-            partition by orders.customer_id
-            ) as customer_non_returned_order_count
-        
-        , sum(nvl2(orders.valid_order_date, orders.order_value_dollars, 0)) over(
-            partition by customers.customer_id
-            ) as customer_total_lifetime_value
+        min(orders.order_date) as first_order_date,
+        min(orders.valid_order_date) as first_non_returned_order_date,
+        max(orders.valid_order_date) as most_recent_non_returned_order_date,
+        count(*) as order_count,
+        sum(nvl2(orders.valid_order_date, 1, 0)) as non_returned_order_count,
+        sum(nvl2(orders.valid_order_date, orders.order_value_dollars, 0)) as total_lifetime_value
 
     from orders
     join customers
         on orders.customer_id = customers.customer_id
+    group by 1, 2, 3, 4
 )
 
-, add_avg_order_values as (
+, customer_metrics_with_avg as (
     select
-        *
-        , customer_total_lifetime_value / customer_non_returned_order_count as customer_avg_non_returned_order_value
-    from customer_orders
+        *,
+        total_lifetime_value / nullif(non_returned_order_count, 0) as avg_non_returned_order_value
+    from customer_metrics
 )
 
--- Final CTEs
+-- Final CTE: Join order-level data with customer-level metrics
 , final as (
-    select 
+    select
         orders.order_id,
         orders.customer_id,
-        customers.surname,
-        customers.givenname,
+        cm.surname,
+        cm.givenname,
 
-        customer_first_order_date as first_order_date,
-        customer_order_count as order_count,
-        customer_total_lifetime_value as total_lifetime_value,
+        cm.first_order_date,
+        cm.order_count,
+        cm.total_lifetime_value,
+        cm.avg_non_returned_order_value,
 
         orders.order_value_dollars,
         orders.order_status,
         orders.payment_status
-    from orders
-    join customers
-        on orders.customer_id = customers.customer_id
 
-    join add_avg_order_values as customer_orders
-        on orders.customer_id = customer_orders.customer_id
+    from orders
+    join customer_metrics_with_avg as cm
+        on orders.customer_id = cm.customer_id
 )
+
 select * from final
 
 
