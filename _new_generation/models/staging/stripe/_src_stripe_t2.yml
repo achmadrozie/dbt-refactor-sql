@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: stripe
+    database: dbt_refactor
+    schema: public
+    tables:
+      - name: stripe_payments_t2

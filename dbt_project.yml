@@ -15,12 +15,12 @@ dispatch:
     search_order: ['dbt_refactor_sql', 'dbt_utils']
 
 # Main folders for models
-model-paths: ["models"]
-analysis-paths: ["analyses"]
-test-paths: ["tests"]
-seed-paths: ["seeds"]
-macro-paths: ["macros"]
-snapshot-paths: ["snapshots"]
+model-paths: ["models", "_new_generation/models"]
+analysis-paths: ["analyses","_new_generation/analyses"]
+test-paths: ["tests", "_new_generation/tests"]
+seed-paths: ["seeds", "_new_generation/seeds"]
+macro-paths: ["macros", "_new_generation/macros"]
+snapshot-paths: ["snapshots", "_new_generation/snapshot"]
 
 clean-targets:
   - "target"
