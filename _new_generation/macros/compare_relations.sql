@@ -1,12 +1,6 @@
-{{ config(enabled=false) }}
-
 {% macro compare_customer_orders() %}
 
-{% set old_relation = adapter.get_relation(
-      database = target.database,
-      schema = "public",
-      identifier = "customer_orders"
-) -%}
+{% set old_relation = ref('customer_orders') %}
 
 {% set new_relation = ref('fact_customer_orders') %}
 

@@ -7,106 +7,106 @@
         - Lower Case
 
     2. SOURCE ENABLEMENT
-        - Create Sources
-        - Update Sources
-        - Tidy Up
+        - Create Sources (yml)
+        - Update Sources (in marts)
+        - Tidy Up (indentation, on, etc.)
+        - Add source freshness tests
+        - Add base schema tests (unique, not_null)
 
-    3. LOGIC CTE ENABLEMENT
-        - Intermediary-ing UP
+    3. LOGIC CTE ENABLEMENT -> PUSH TO SOURCE
+        - Intermediary-ing UP (rework join -> CTE)
+        
         - Simplifying column name modification on CTE logic and move to the source table
             - payments
             - orders
             - customers
+        - Ensure column names match legacy for comparison
+    
+    4. INTERMEDIATE LAYER
+       - int_payment_orders: Payment aggregations
+       - int_paid_orders: Orders + Payments + Customers
+       - int_customer_orders: Customer aggregation stats
+       - int_customer_lifetime_value: CLV self-join calculation
+    
+    5. MART LAYER
+       - Business logic (nvsr, fdos)
+       - Final transformations
+       - Add comprehensive documentation (on md files)
+
+    -- result test (QA)
+    6. TESTING THROUGHOUT
+       - Schema tests at each layer
+       - audit_helper comparisons at staging & intermediate
+       - Custom data tests for business rules
+       - Performance benchmarks
+
+    -- bonus (post work)
+
+    7. CUTOVER & CLEANUP
+       - Run legacy + new models in parallel (monitoring period)
+       - Update downstream dependencies (BI, reports)
+       - Monitor for discrepancies
+       - Deprecate legacy models
+       - Archive/remove old code
 ***/
--- Source CTE
-with orders as (
-    select 
-        *
-    from {{ ref('stg_jaffle_shop___orders') }}
-)
 
-, customers as (
-    select 
-        *
-    from {{ ref('stg_jaffle_shop___customers') }}
-)
-, base_payments as (
-    select
-        *
-    from {{ ref('stg_stripe___payments') }}
-)
+
 -- Logic CTE
-, payments as (
-    select 
-        order_id
-        , max(order_created_date) as payment_finalized_date
-        , sum(order_amount) / 100.0 as total_amount_paid
-    from base_payments
-    where order_status <> 'fail'
-    group by 1
-)
-
-
--- Final CTE
-, paid_orders as (
+with paid_orders as (
 
     select 
-        orders.order_id,
-        orders.customer_id,
-        orders.order_placed_at,
-        orders.order_status,
-
-        p.total_amount_paid,
-        p.payment_finalized_date,
-
-        c.customer_first_name,
-        c.customer_last_name
-    from orders
-    left join payments p 
-        on orders.order_id = p.order_id
-    left join customers c 
-        on orders.customer_id = c.customer_id 
+        order_id,
+        customer_id,
+        order_placed_at,
+        order_status,
+        total_amount_paid,
+        payment_finalized_date,
+        customer_first_name,
+        customer_last_name,
+        row_number() over (order by order_id) as transaction_seq,
+        row_number() over (partition by customer_id order by order_id) as customer_sales_seq
+    from {{ ref('int_paid_orders') }}
 
 )
 , customer_lifetime_value as (
     select
-        p.order_id,
-        sum(t2.total_amount_paid) as clv_bad
-    from paid_orders p
-    left join paid_orders t2 
-        on p.customer_id = t2.customer_id 
-        and p.order_id >= t2.order_id
-    group by 1
-    order by p.order_id
+        order_id,
+        clv_bad
+    from {{ ref('int_customer_lifetime_value') }}
 )
 , customer_orders as (
 
     select 
-        c.customer_id                                  as customer_id
-        , min(order_placed_at)                         as first_order_date
-        , max(order_placed_at)                         as most_recent_order_date
-        , count(orders.order_id)                       as number_of_orders
-    from customers c 
-    left join orders
-        on orders.customer_id = c.customer_id 
-    group by 1
+        customer_id,
+        first_order_date,
+        most_recent_order_date,
+        number_of_orders
+    from {{ ref('int_customer_orders') }}
+
 )
 
+-- Final CTE
 , final AS (
     select
-        p.*,
-        row_number() over (order by p.order_id)                                  as transaction_seq,
-        row_number() over (partition by p.customer_id order by p.order_id)         as customer_sales_seq,
-        case when c.first_order_date = p.order_placed_at
-        then 'new'
-        else 'return' end                                                        as nvsr,
-        clv.clv_bad                                                                as customer_lifetime_value,
-        c.first_order_date                                                       as fdos
-    from paid_orders p
-    left join customer_orders as c 
-        on p.customer_id = c.customer_id
+        paid_orders.order_id,
+        paid_orders.customer_id,
+        paid_orders.order_placed_at,
+        paid_orders.order_status,
+        paid_orders.total_amount_paid,
+        paid_orders.payment_finalized_date,
+        paid_orders.customer_first_name,
+        paid_orders.customer_last_name,
+        paid_orders.transaction_seq,
+        paid_orders.customer_sales_seq,
+
+        case when customer_orders.first_order_date = paid_orders.order_placed_at then 'new' else 'return' end   as nvsr,
+        clv.clv_bad                                                                                             as customer_lifetime_value,
+        customer_orders.first_order_date                                                                        as fdos
+    from paid_orders
+    left join customer_orders 
+        on paid_orders.customer_id = customer_orders.customer_id
     left join customer_lifetime_value clv
-        on clv.order_id = p.order_id
+        on clv.order_id = paid_orders.order_id
     order by order_id
 )
 
