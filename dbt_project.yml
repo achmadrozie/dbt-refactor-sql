@@ -33,8 +33,12 @@ models:
     staging:
       +schema: 'staging'
       +materialized: view
+    
+    intermediate:
+      +schema: 'intermediate'
+      +materialized: table
 
     # Marts models (second layer - business logic)
-    mart:
-      +schema: 'mart'
+    marts:
+      +schema: 'marts'
       +materialized: table
