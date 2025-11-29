@@ -52,6 +52,14 @@
 
 
 -- Logic CTE
+
+{{
+    config(
+        materialized='incremental',
+        unique_key = 'order_id'
+    )
+}}
+
 with paid_orders as (
 
     select 
@@ -110,4 +118,9 @@ with paid_orders as (
     order by order_id
 )
 
-select * from final
+select * 
+from final
+
+{% if is_incremental() %}
+    where order_placed_at >= (select max(order_placed_at) from {{ this }})
+{% endif %}
