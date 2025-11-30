@@ -56,7 +56,9 @@
 {{
     config(
         materialized='incremental',
-        unique_key = 'order_id'
+        unique_key = 'order_id',
+        incremental_strategy = 'merge',
+        on_schema_change = 'fail'
     )
 }}
 
@@ -97,7 +99,7 @@ with paid_orders as (
 , final AS (
     select
         paid_orders.order_id,
-        paid_orders.customer_id,
+        paid_orders.customer_id as customer_id, 
         paid_orders.order_placed_at,
         paid_orders.order_status,
         paid_orders.total_amount_paid,
