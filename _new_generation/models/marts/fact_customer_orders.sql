@@ -52,6 +52,16 @@
 
 
 -- Logic CTE
+
+{{
+    config(
+        materialized='incremental',
+        unique_key = 'order_id',
+        incremental_strategy = 'merge',
+        on_schema_change = 'fail'
+    )
+}}
+
 with paid_orders as (
 
     select 
@@ -89,7 +99,7 @@ with paid_orders as (
 , final AS (
     select
         paid_orders.order_id,
-        paid_orders.customer_id,
+        paid_orders.customer_id as customer_id, 
         paid_orders.order_placed_at,
         paid_orders.order_status,
         paid_orders.total_amount_paid,
@@ -110,4 +120,9 @@ with paid_orders as (
     order by order_id
 )
 
-select * from final
+select * 
+from final
+
+{% if is_incremental() %}
+    where order_placed_at >= (select max(order_placed_at) from {{ this }})
+{% endif %}

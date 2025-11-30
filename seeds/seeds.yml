@@ -1,0 +1,113 @@
+version: 2
+
+seeds:
+  - name: jaffle_shop_orders
+    description: Raw order data from Jaffle Shop e-commerce platform
+    columns:
+      - name: id
+        description: Primary key for orders
+        tests:
+          - unique
+          - not_null
+
+      - name: user_id
+        description: Foreign key to customers table
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('jaffle_shop_customers')
+                field: id
+
+      - name: order_date
+        description: Date when the order was placed
+        tests:
+          - not_null
+
+      - name: status
+        description: Current status of the order
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['placed', 'shipped', 'completed', 'return_pending', 'returned']
+
+  - name: jaffle_shop_customers
+    description: Raw customer data from Jaffle Shop CRM system
+    columns:
+      - name: id
+        description: Primary key for customers
+        tests:
+          - unique
+          - not_null
+
+      - name: first_name
+        description: Customer's first name
+        tests:
+          - not_null
+
+      - name: last_name
+        description: Customer's last name
+        tests:
+          - not_null
+
+  - name: stripe_payments
+    description: Raw payment transaction data from Stripe payment processor
+    columns:
+      - name: id
+        description: Primary key for payments
+        tests:
+          - unique
+          - not_null
+
+      - name: orderid
+        description: Foreign key to orders table
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('jaffle_shop_orders')
+                field: id
+
+      - name: paymentmethod
+        description: Method used for payment (e.g., credit_card, bank_transfer, coupon)
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['credit_card', 'bank_transfer', 'coupon', 'gift_card']
+
+      - name: status
+        description: Payment transaction status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['success', 'fail']
+
+      - name: amount
+        description: Payment amount in cents
+        tests:
+          - not_null
+
+      - name: created
+        description: Timestamp when payment was created
+        tests:
+          - not_null
+
+  - name: employees
+    description: Employee master data with customer assignments
+    columns:
+      - name: employee_id
+        description: Unique identifier for employees
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: Associated customer identifier
+        tests:
+          - relationships:
+              arguments:
+                to: ref('jaffle_shop_customers')
+                field: id
