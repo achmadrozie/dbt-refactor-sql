@@ -30,6 +30,7 @@ clean-targets:
 models:
   dbt_refactor_sql:
     # Staging models (first layer - data cleaning)
+    +required_tests: {"unique.*|not_null": 2}
     staging:
       +schema: 'staging'
       +materialized: view
