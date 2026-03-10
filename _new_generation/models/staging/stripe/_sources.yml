@@ -1,8 +1,0 @@
-version: 2
-
-sources:
-  - name: stripe
-    database: dbt_refactor_sql
-    schema: main
-    tables:
-      - name: _payments
