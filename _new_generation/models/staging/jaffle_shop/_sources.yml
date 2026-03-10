@@ -2,8 +2,8 @@ version: 2
 
 sources:
   - name: jaffle_shop
-    database: dbt_refactor
-    schema: public
+    database: dbt_refactor_sql
+    schema: main
     tables:
       - name: _customers
       - name: _orders
