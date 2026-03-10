@@ -1,0 +1,18 @@
+models:
+  - name: _stg_stripe__payments
+    description: Staged payment data, one row for each completed payment.
+    columns:
+      - name: payment_id
+        description: Primary Key
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: ??
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                fileId: order_id
+                to: ref('stg_jaffle_shop__orders')
+        
