@@ -117,7 +117,7 @@ with paid_orders as (
         on paid_orders.customer_id = customer_orders.customer_id
     left join customer_lifetime_value clv
         on clv.order_id = paid_orders.order_id
-    order by order_id
+    order by paid_orders.order_id
 )
 
 select * 
