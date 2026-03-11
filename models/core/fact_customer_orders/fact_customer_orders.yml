@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: fact_customer_orders
+    description: '{{ doc("fact_customer_orders") }}'
+    config:
+      materialized: 'incremental'
+      unique_key: 'order_id'
+      incremental_strategy: 'merge'
+      on_schema_change: 'fail'
+    columns:
+      - name: order_id
+        description: '{{ doc("order_id") }}'
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: '{{ doc("customer_id") }}'
+        tests:
+          - not_null
+      - name: order_date
+        description: '{{ doc("order_date") }}'
+      - name: order_status
+        description: '{{ doc("order_status") }}'
+      - name: total_amount_paid
+        description: '{{ doc("total_amount_paid") }}'
+      - name: payment_finalized_date
+        description: '{{ doc("payment_finalized_date") }}'
+      - name: customer_first_name
+        description: '{{ doc("customer_first_name") }}'
+      - name: customer_last_name
+        description: '{{ doc("customer_last_name") }}'
+      - name: transaction_seq
+        description: '{{ doc("transaction_seq") }}'
+      - name: customer_sales_seq
+        description: '{{ doc("customer_sales_seq") }}'
+      - name: nvsr
+        description: '{{ doc("nvsr") }}'
+      - name: customer_lifetime_value
+        description: '{{ doc("customer_lifetime_value") }}'
+      - name: fdos
+        description: '{{ doc("fdos") }}'
