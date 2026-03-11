@@ -26,9 +26,7 @@ semantic_models:
         type: time
         type_params:
           time_granularity: day
-      - name: order_id
-        type: categorical
-      - name: customer_id
+      - name: order_status
         type: categorical
       
       
