@@ -1,5 +1,5 @@
 models:
-  - name: stg_jaffle_shop__customers
+  - name: stg_jaffle_shop___customers
     description: Staged customers data, one row per customer
     columns:
       - name: customer_id
@@ -12,7 +12,7 @@ models:
       - name: customer_last_name
         description: Customer last name
 
-  - name: stg_jaffle_shop__orders
+  - name: stg_jaffle_shop___orders
     description: Staged orders data, one row per order
     columns:
       - name: order_id
@@ -21,12 +21,12 @@ models:
           - unique
           - not_null
       - name: customer_id
-        description: Foreign key to stg_jaffle_shop__customers
+        description: Foreign key to stg_jaffle_shop___customers
         data_tests:
           - relationships:
               arguments:
                 field: customer_id
-                to: ref('stg_jaffle_shop__customers')
+                to: ref('stg_jaffle_shop___customers')
       - name: order_status
         description: Status of the order
         data_tests:
