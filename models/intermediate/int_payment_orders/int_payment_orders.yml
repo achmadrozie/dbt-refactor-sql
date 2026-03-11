@@ -1,0 +1,10 @@
+models:
+  - name: int_payment_orders
+    description: '{{ doc("int_payment_orders") }}'
+    columns:
+      - name: order_id
+        description: '{{ doc("order_id") }}'
+      - name: payment_finalized_date
+        description: '{{ doc("payment_finalized_date") }}'
+      - name: total_amount_paid
+        description: '{{ doc("total_amount_paid") }}'
