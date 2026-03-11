@@ -1,0 +1,13 @@
+metrics:
+  - name: count_order
+    label: Count Total Order
+    description: '{{ doc("count_order") }}'
+    
+    config:
+      tags:
+        - additive
+        - utc
+    type: simple
+    type_params:
+      measure:
+        name: count_order

@@ -1,0 +1,15 @@
+metrics:
+  - name: completed_order_rate
+    label: Completed Order Rate
+    description: '{{ doc("completed_order_rate") }}'
+
+    config:
+      tags:
+        - ratio
+        - utc
+    type: derived
+    type_params:
+      expr: count_completed_order / count_order
+      metrics:
+        - name: count_completed_order
+        - name: count_order
