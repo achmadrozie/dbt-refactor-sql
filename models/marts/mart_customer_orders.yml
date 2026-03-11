@@ -1,0 +1,16 @@
+models:
+  - name: mart_customer_orders
+    description: '{{ doc("mart_customer_orders") }}'
+    columns:
+      - name: customer_id
+        description: '{{ doc("mart_customer_orders__customer_id") }}'
+      - name: order_date
+        description: '{{ doc("mart_customer_orders__order_date") }}'
+      - name: order_status
+        description: '{{ doc("mart_customer_orders__order_status") }}'
+      - name: count_orders
+        description: '{{ doc("mart_customer_orders__count_orders") }}'
+      - name: total_revenue
+        description: '{{ doc("mart_customer_orders__total_revenue") }}'
+      - name: customer_type
+        description: '{{ doc("mart_customer_orders__customer_type") }}'
