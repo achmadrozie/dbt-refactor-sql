@@ -1,0 +1,34 @@
+semantic_models:
+  - name: fact_customer_orders
+    defaults:
+      agg_time_dimension: order_date
+    description:
+      Semantic model of fact_customer_orders table.
+
+    model: ref('fact_customer_orders')
+
+    entities:
+      - name: order_id
+        type: primary
+      - name: customer_id
+        type: foreign
+    
+    measures:
+      - name: count_order
+        expr: 1
+        agg: sum
+      - name: count_completed_order
+        expr: if(order_status = 'completed', 1 , 0)
+        agg: sum
+      
+    dimensions:
+      - name: order_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: order_id
+        type: categorical
+      - name: customer_id
+        type: categorical
+      
+      
