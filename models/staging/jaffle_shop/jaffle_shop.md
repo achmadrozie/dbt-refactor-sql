@@ -22,6 +22,10 @@ Customer's last (family) name.
 Unique identifier for an order. Primary key in the orders model, foreign key elsewhere.
 {% enddocs %}
 
+{% docs order_date %}
+Date the order was placed.
+{% enddocs %}
+
 {% docs order_status %}
 Current status of the order. Accepted values: `completed`, `shipped`, `returned`, `placed`, `return_pending`.
 {% enddocs %}
