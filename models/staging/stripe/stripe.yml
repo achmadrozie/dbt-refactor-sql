@@ -1,5 +1,5 @@
 models:
-  - name: _stg_stripe__payments
+  - name: stg_stripe___payments
     description: Staged payment data, one row for each completed payment.
     columns:
       - name: payment_id
@@ -13,6 +13,6 @@ models:
           - not_null
           - relationships:
               arguments:
-                fileId: order_id
-                to: ref('stg_jaffle_shop__orders')
+                field: order_id
+                to: ref('stg_jaffle_shop___orders')
         
