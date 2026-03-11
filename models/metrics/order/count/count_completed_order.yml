@@ -1,0 +1,13 @@
+metrics:
+  - name: count_completed_order
+    label: Count Completed Order
+    description: '{{ doc("count_completed_order") }}'
+
+    config:
+      tags:
+        - additive
+        - utc
+    type: simple
+    type_params:
+      measure:
+        name: count_completed_order

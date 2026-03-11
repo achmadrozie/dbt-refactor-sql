@@ -1,0 +1,8 @@
+models:
+  - name: int_customer_lifetime_value
+    description: '{{ doc("int_customer_lifetime_value") }}'
+    columns:
+      - name: order_id
+        description: '{{ doc("order_id") }}'
+      - name: clv_bad
+        description: '{{ doc("clv_bad") }}'
