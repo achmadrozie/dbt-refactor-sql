@@ -2,7 +2,8 @@
 
 > Refactoring a legacy monolithic SQL query into a modern, modular dbt pipeline.
 
-![Overall Data Flow](Overall%20Data%20Flow.png)
+<img width="3448" height="640" alt="image" src="https://github.com/user-attachments/assets/167c610e-b40e-487c-a82a-f34500e36410" />
+
 
 ---
 
