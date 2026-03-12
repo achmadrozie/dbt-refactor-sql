@@ -37,7 +37,7 @@ Takes a deeply nested legacy SQL query and breaks it into a clean, testable dbt 
 
 ## Tech Stack
 
-- **dbt Core** + **Snowflake**
+- **dbt Core** + **DuckDB**
 - `dbt-labs/audit_helper` — validate refactored output matches legacy
 - `tnightengale/dbt_meta_testing` — enforce test coverage
 
