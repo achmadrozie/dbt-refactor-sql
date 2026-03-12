@@ -1,4 +1,4 @@
-# dbt Refactor SQL — Learning Portfolio
+# dbt Refactor SQL
 
 > Refactoring a legacy monolithic SQL query into a modern, modular dbt pipeline.
 
